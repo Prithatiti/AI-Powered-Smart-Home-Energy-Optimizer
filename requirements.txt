@@ -1,0 +1,25 @@
+# --- Data processing & numerical computing ---
+numpy
+pandas
+matplotlib
+plotly
+
+# --- Time series forecasting ---
+prophet
+scikit-learn
+
+# --- Web API framework ---
+fastapi
+uvicorn
+
+# --- AI / LLM integration ---
+openai
+agent-framework
+
+# --- Configuration & environment ---
+python-dotenv
+
+# --- Development & debugging ---
+ipykernel
+icecream
+ipython

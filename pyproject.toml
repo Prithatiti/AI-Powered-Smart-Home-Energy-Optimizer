@@ -1,0 +1,22 @@
+[project]
+name = "ai-powered-smart-home-energy-optimizer"
+version = "0.1.0"
+description = "WattPilot AI is an AI-powered smart-home energy optimization platform that uses Microsoft Agent Framework, Azure OpenAI, ML-based energy forecasting, weather data, historical consumption, and multi-agent collaboration to predict appliance-level energy usage, estimate energy and cost savings, and generate personalized, actionable recommendations for optimizing household electricity consumption."
+readme = "README.md"
+requires-python = ">=3.14"
+dependencies = [
+    "agent-framework>=1.18.0",
+    "fastapi>=0.141.1",
+    "icecream>=2.2.0",
+    "ipykernel>=7.3.0",
+    "ipython>=9.17.1",
+    "matplotlib>=3.11.2",
+    "numpy>=2.5.3",
+    "openai>=3.13.0",
+    "pandas>=3.0.5",
+    "plotly>=7.0.0",
+    "prophet>=1.4.0",
+    "python-dotenv>=1.2.3",
+    "scikit-learn>=1.9.1",
+    "uvicorn>=0.52.4",
+]
