@@ -526,6 +526,7 @@ dependencies = [
     { name = "plotly" },
     { name = "prophet" },
     { name = "python-dotenv" },
+    { name = "requests" },
     { name = "scikit-learn" },
     { name = "uvicorn" },
 ]
@@ -544,6 +545,7 @@ requires-dist = [
     { name = "plotly", specifier = ">=7.0.0" },
     { name = "prophet", specifier = ">=1.4.0" },
     { name = "python-dotenv", specifier = ">=1.2.3" },
+    { name = "requests", specifier = ">=2.34.2" },
     { name = "scikit-learn", specifier = ">=1.9.1" },
     { name = "uvicorn", specifier = ">=0.52.4" },
 ]

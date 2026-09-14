@@ -12,6 +12,9 @@ scikit-learn
 fastapi
 uvicorn
 
+# --- HTTP client (weather / geocoding tools) ---
+requests
+
 # --- AI / LLM integration ---
 openai
 agent-framework

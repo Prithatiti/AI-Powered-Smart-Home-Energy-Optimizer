@@ -28,8 +28,10 @@ Run it from anywhere in the project:
 import json  # dump metric summaries / registry to disk
 import logging  # quieten the noisy cmdstanpy logger (see CONFIG below)
 import pickle  # persist the trained Prophet models
-from datetime import datetime, timezone  # UTC stamp used for artifact file names
+import sys  # ensure the project root is importable when run directly
+from datetime import UTC, datetime  # UTC stamp used for artifact file names
 from pathlib import Path  # cross-platform path handling
+from typing import Any
 
 import numpy as np
 import pandas as pd
@@ -40,20 +42,30 @@ from sklearn.metrics import (
     mean_squared_error,  # MSE  (kWh/day)^2 -> RMSE = sqrt(MSE)
 )
 
+# Make the project root importable so `Backend.Config.settings` resolves even
+# when this module is launched directly (python Backend/Models/model_loader.py).
+PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
+if str(object=PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(object=PROJECT_ROOT))
+
+from Backend.Config import settings
+
 # ============================================================================
-# Path resolution helpers (locate dataset + Backend folder)
+# Path resolution helpers (locate dataset)
 # ============================================================================
-# The script may be launched from Backend/Models, Backend/ or the repo root,
-# so instead of trusting a fixed CWD we SEARCH upward/downward from the
-# possible launch points until the dataset file is found, and derive the
-# Backend/ folder from the file that was actually located.
+# The dataset is found by SEARCHING from the canonical Backend folder (from
+# settings.py) plus the possible launch points, so we never trust a fixed CWD.
 
 
 def resolve_dataset() -> Path:
     """Return the absolute path to the raw CSV, wherever the script is launched."""
-    # Candidate launch points: the current working directory and the directory
-    # that contains this script.
-    launch_points = [Path.cwd(), Path(__file__).resolve().parent.parent]
+    # Candidate launch points: the canonical Backend folder from settings.py,
+    # the current working directory, and the directory that contains this script.
+    launch_points = [
+        settings.BACKEND_DIR,
+        Path.cwd(),
+        Path(__file__).resolve().parent.parent,
+    ]
 
     for start in launch_points:
         # Upward search (launched from Notebook/ or Backend/) ...
@@ -72,31 +84,18 @@ def resolve_dataset() -> Path:
     return Path.cwd() / "Dataset" / "smart_home_energy_consumption_large.csv"
 
 
-def find_backend_dir(dataset_path: Path) -> Path:
-    """Return the <project>/Backend folder that owns the given dataset file."""
-    # The dataset lives in <Backend>/Dataset/, so walk upward from the
-    # dataset's folder until we hit a directory literally named "Backend".
-    for parent in dataset_path.parents:
-        if parent.name == "Backend":
-            return parent
-
-    # Fallback for unusual layouts: <Dataset>/ -> <Backend>/
-    return dataset_path.parent.parent
-
-
 # ============================================================================
 # Global configuration & output directories
 # ============================================================================
 
 # --- Paths ------------------------------------------------------------------
-# The dataset is located by `resolve_dataset()`; from that file we derive
-# Backend/Artifacts/ without assuming a particular working directory.
+# Canonical artifact paths are centralized in Backend/Config/settings.py; the
+# dataset is located by `resolve_dataset()`.
 DATASET_PATH = resolve_dataset()
-BACKEND_DIR = find_backend_dir(DATASET_PATH)      # <project>/Backend
-ARTIFACTS_DIR = BACKEND_DIR / "Artifacts"
-MODELS_DIR = ARTIFACTS_DIR / "Models"
-PRED_DIR = ARTIFACTS_DIR / "Predictions"
-ACCURACY_DIR = ARTIFACTS_DIR / "Accuracy"
+ARTIFACTS_DIR = settings.ARTIFACTS_DIR
+MODELS_DIR = settings.MODELS_DIR
+PRED_DIR = settings.PRED_DIR
+ACCURACY_DIR = settings.ACCURACY_DIR
 
 # --- Dataset column names ----------------------------------------------------
 # TARGET_COL : the numeric column we forecast (total daily energy in kWh).
@@ -121,7 +120,7 @@ TEST_DAYS = 73
 #     household energy usage.
 #   - seasonality_mode="additive": seasonal effect scales additively (safe for
 #     strictly positive daily energy sums).
-PROPHET_CONFIG = {
+PROPHET_CONFIG: dict[str, Any] = {
     "growth": "linear",                 # linear trend with automatic changepoints
     "yearly_seasonality": False,        # not enough data for a stable yearly term
     "weekly_seasonality": True,         # week-day cycle
@@ -137,7 +136,7 @@ PROPHET_CONFIG = {
 # Prophet / cmdstanpy log a LOT of benign INFO text while fitting. Raise the
 # cmdstanpy logger threshold so the console stays readable - WITHOUT hiding
 # real warnings from pandas / numpy.
-logging.getLogger("cmdstanpy").setLevel(logging.WARNING)
+logging.getLogger(name="cmdstanpy").setLevel(level=logging.WARNING)
 
 # --- Output directories --------------------------------------------------------
 # Create the artifact folders up front (no-op when they already exist).
@@ -238,7 +237,7 @@ def load_and_prepare() -> tuple:
     # Combine the separate Date + Time strings into one clock timestamp.
     # `errors="coerce"` turns malformed strings into NaT instead of failing.
     df_raw["measurement_datetime"] = pd.to_datetime(
-        df_raw["Date"].astype(str) + " " + df_raw["Time"].astype(str),
+        arg=df_raw["Date"].astype(str) + " " + df_raw["Time"].astype(str),
         format="%Y-%m-%d %H:%M",
         errors="coerce",
     )
@@ -343,14 +342,14 @@ def train_and_evaluate(daily: dict) -> tuple:
         test = bag["test"]
 
         # Future frame needs `ds` + every regressor ('y' is filled by Prophet).
-        future = test[["measurement_datetime", "temp", "is_weekend", "hh_size"]].rename(
+        future = test[["measurement_datetime", "temp", "is_weekend", "hh_size"]].rename(  # ty: ignore[not-subscriptable]
             columns={"measurement_datetime": "ds"}  # Prophet.predict needs literal ds
         )
         fc = model.predict(df=future)
 
         predictions[app] = pd.DataFrame({
-            "measurement_datetime": test["measurement_datetime"].values,
-            "actual": test["energy"].values,
+            "measurement_datetime": test["measurement_datetime"].values,  # ty: ignore[not-subscriptable]
+            "actual": test["energy"].values,  # ty: ignore[not-subscriptable]
             "yhat": fc["yhat"].values,
             "yhat_lower": fc["yhat_lower"].values,
             "yhat_upper": fc["yhat_upper"].values,
@@ -371,7 +370,7 @@ def train_and_evaluate(daily: dict) -> tuple:
             "mape_pct": round(number=mape(y_true=actual, y_pred=yhat), ndigits=2),
         })
 
-    summary_df = pd.DataFrame(summary).sort_values("rmse_kwh").reset_index(drop=True)
+    summary_df = pd.DataFrame(data=summary).sort_values(by="rmse_kwh").reset_index(drop=True)
 
     print("\nPer-appliance forecast accuracy on the held-out test window:\n")
     print(summary_df.to_string(index=False))
@@ -390,7 +389,7 @@ def persist(models: dict, predictions: dict, summary_df: pd.DataFrame) -> None:
     """
     # Using UTC keeps file naming deterministic across environments while
     # avoiding the timezone-naive warning from datetime.now() without tz.
-    stamp = datetime.now(tz=timezone.utc).strftime(format="%Y%m%d_%H%M%S")
+    stamp = datetime.now(tz=UTC).strftime(format="%Y%m%d_%H%M%S")
 
     # Per-appliance accuracy -> easy lookup dict for the registry records.
     metric_lookup = {}
