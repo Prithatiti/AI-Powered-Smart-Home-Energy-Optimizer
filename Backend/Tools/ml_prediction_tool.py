@@ -163,7 +163,7 @@ if __name__ == "__main__":
     # failure path for an appliance that has no trained model.
     settings.setup_logging(level="INFO")
 
-    import datetime as _dt  # compute "tomorrow" in a timezone-naive, safe way
+    import datetime as _dt  # compute "tomorrow" in a timezone-aware, safe way
 
     # (appliance, forecast_date, avg_temp, hh_size, is_weekend)
     # forecast_date is left None on purpose -> defaults to tomorrow.
@@ -173,7 +173,7 @@ if __name__ == "__main__":
         ("This-Is-Not-An-Appliance", None,          20.0, 2.0, 0),   # bad name
     ]
 
-    base = _dt.date.today() + _dt.timedelta(days=1)
+    base = _dt.datetime.now(tz=_dt.timezone.utc).date() + _dt.timedelta(days=1)
     for appliance, _date, temp, hh, weekend in examples:
         forecast_date = _date or base.isoformat()
         try:
