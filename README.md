@@ -308,6 +308,16 @@ SMTP_USE_STARTTLS=true
 LOG_LEVEL=DEBUG
 ```
 
+#### 📧 Generate Email Password/Token
+
+Follow the link below to generate the email password or token:
+
+**Generate Email Password/Token** → https://myaccount.google.com/apppasswords
+
+> This is the **App Password** you paste into `SMTP_PASSWORD` for Gmail (you must
+> have 2-Step Verification enabled on your Google account to create one). For
+> other providers, use the equivalent SMTP authorization token / password.
+
 ---
 
 ## ▶️ 11. Run the Backend
