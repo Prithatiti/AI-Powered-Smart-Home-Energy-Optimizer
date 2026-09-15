@@ -268,7 +268,7 @@ if __name__ == "__main__":
         "tools, and return JSON only.\n\n"
         f"{agent_1_payload}"
     )
-    reply = asyncio.run(run_recommendation_agent(prompt, agent=demo_agent))
+    reply = asyncio.run(main=run_recommendation_agent(user_input=prompt, agent=demo_agent))
     # The Windows console codepage (e.g. cp1252) cannot encode every Unicode
     # character the model may emit (e.g. a non-breaking hyphen), so write UTF-8
     # bytes straight to stdout instead of letting print() fail on encoding.

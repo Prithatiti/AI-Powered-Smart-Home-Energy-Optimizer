@@ -12,6 +12,9 @@ scikit-learn
 fastapi
 uvicorn
 
+# --- Email ($ pydantic's EmailStr validation) ---
+email-validator
+
 # --- HTTP client (weather / geocoding tools) ---
 requests
 

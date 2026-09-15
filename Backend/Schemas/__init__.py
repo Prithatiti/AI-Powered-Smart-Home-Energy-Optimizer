@@ -21,6 +21,7 @@ Working-notes on the design:
 
 # Re-export every public model so callers can import from the package root:
 #     from Backend.Schemas import HomeProfile, OptimizationRecommendation
+from Backend.Schemas.email import EmailPlanRequest
 from Backend.Schemas.energy import ApplianceUsage
 from Backend.Schemas.forecast import ApplianceForecast, ForecastRequest
 from Backend.Schemas.home import (
@@ -34,6 +35,7 @@ from Backend.Schemas.home import (
 from Backend.Schemas.recommendation import (
     ApplianceAction,
     OptimizationRecommendation,
+    OptimizeEnergyRequest,
 )
 from Backend.Schemas.weather import WeatherForecast, WeatherRequest
 
@@ -43,9 +45,11 @@ __all__ = [
     "ApplianceForecast",
     "ApplianceUsage",
     "ElectricityTariff",
+    "EmailPlanRequest",
     "ForecastRequest",
     "HomeProfile",
     "OptimizationRecommendation",
+    "OptimizeEnergyRequest",
     "TimeOfUseSlot",
     "UserPreferences",
     "WeatherForecast",

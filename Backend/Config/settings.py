@@ -72,6 +72,30 @@ WEATHER_USER_AGENT = os.getenv(
 )
 
 # ============================================================================
+# SMTP (outbound email reports)
+# ============================================================================
+# Outbound SMTP server used to deliver the email reports composed by the
+# Email Report agent.  Credentials are loaded from the environment / .env:
+#     SMTP_HOST      - SMTP server hostname (e.g. "smtp.gmail.com")
+#     SMTP_PORT      - submission port (587 for STARTTLS)
+#     SMTP_USERNAME  - mailbox login used to authenticate
+#     SMTP_PASSWORD  - mailbox password / app-password
+# The placeholder host "smtp.example.com" is treated as "not configured".
+SMTP_HOST = os.getenv(key="SMTP_HOST")
+SMTP_PORT = int(os.getenv(key="SMTP_PORT", default="587"))
+SMTP_USERNAME = os.getenv(key="SMTP_USERNAME")
+SMTP_PASSWORD = os.getenv(key="SMTP_PASSWORD")
+# Sender "From" address - usually the same mailbox that authenticates.  The
+# default recipient for reports comes from SMTP_TO_EMAIL when set.
+SMTP_FROM = os.getenv(key="SMTP_FROM", default=SMTP_USERNAME)
+SMTP_TO_EMAIL = os.getenv(key="SMTP_TO_EMAIL")
+# STARTTLS is required on the classic submission port (587); keep it on
+# unless the mail server is a private endpoint without TLS.
+SMTP_USE_STARTTLS = os.getenv(key="SMTP_USE_STARTTLS", default="true").lower() == "true"
+# Seconds to wait for the SMTP server before giving up.
+SMTP_TIMEOUT = int(os.getenv(key="SMTP_TIMEOUT", default="15"))
+
+# ============================================================================
 # Azure OpenAI (LLM) configuration
 # ============================================================================
 # Chat completions for the LLM agents. Provide endpoint, deployment name and
@@ -168,6 +192,21 @@ def setup_logging(level: str | None = None) -> None:
     logging.basicConfig(
         level=getattr(logging, (level or LOG_LEVEL).upper(), logging.INFO),
         format=LOG_FORMAT,
+    )
+
+
+def smtp_configured() -> bool:
+    """Return whether an outbound SMTP server is actually configured.
+
+    ``True`` only when a real host (not the ``smtp.example.com`` placeholder),
+    a username and a password are all present - the minimum a submission
+    server needs to authenticate.
+    """
+    return bool(
+        SMTP_HOST
+        and SMTP_HOST != "smtp.example.com"
+        and SMTP_USERNAME
+        and SMTP_PASSWORD
     )
 
 

@@ -101,13 +101,13 @@ def _safe_json_extract(text: str) -> dict | None:
 
     # ```json ... ``` (or bare ```) fenced block.
     if candidate.startswith("```"):
-        inner = candidate.split("```", 2)
+        inner = candidate.split(sep="```", maxsplit=2)
         if len(inner) >= 3:
             block = inner[1].strip()
             if block.startswith("json"):
                 block = block[4:].strip()
             try:
-                parsed = json.loads(block)
+                parsed = json.loads(s=block)
                 if isinstance(parsed, dict):
                     return parsed
             except json.JSONDecodeError:
@@ -163,7 +163,7 @@ def _validate_collector(data: dict) -> None:
         rows = []
         for row in forecasts:
             try:
-                rows.append(ApplianceForecast.model_validate(row).model_dump())
+                rows.append(ApplianceForecast.model_validate(obj=row).model_dump())
             except Exception as exc:  # noqa: BLE001 - tolerant by contract
                 logger.warning("Skipping malformed forecast row: %s", exc)
         data["forecasts"] = rows
@@ -263,7 +263,7 @@ async def run_agents(profile: HomeProfile) -> dict:
     # ---- Feed the validated collector output to the recommender ------------
     rec_input = json.dumps(collector_data)
     recommender_text = await run_recommendation_agent(
-        f"Analyze and recommend: {rec_input}",
+        user_input=f"Analyze and recommend: {rec_input}",
         agent=recommender_agent,
     )
 
@@ -332,5 +332,5 @@ if __name__ == "__main__":
     # Write UTF-8 explicitly: the Windows console (cp1252) cannot encode the
     # Unicode (e.g. U+2011 non-breaking hyphen) the model sometimes emits.
 
-    output = json.dumps(result, indent=2, ensure_ascii=False)
+    output = json.dumps(obj=result, indent=2, ensure_ascii=False)
     sys.stdout.buffer.write(f"{output}\n".encode())
