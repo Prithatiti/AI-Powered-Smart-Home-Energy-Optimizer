@@ -112,7 +112,7 @@ def get_tod_tariff(day_type: str = "weekday", currency: str = "INR") -> dict[str
         return {
             "currency": _REFERENCE_CURRENCY,
             "source": "resident_india_tou_reference",
-            "time_of_use": deepcopy(REFERENCE_TARIFFS[key]),
+            "time_of_use": deepcopy(x=REFERENCE_TARIFFS[key]),
         }
 
     # Unknown day type / unsupported currency: honest empty tariff for the

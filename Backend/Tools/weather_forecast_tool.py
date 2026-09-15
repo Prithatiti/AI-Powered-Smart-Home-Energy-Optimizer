@@ -187,25 +187,7 @@ def _first_or(seq: list, default: Any) -> Any:
     return seq[0] if seq else default
 
 
-# ---- Tool facade for agents -------------------------------------------------
-# A single callable with a plain-JSON payload keeps agent bridge code simple.
-def weather_tool(
-    latitude: float, longitude: float, timezone: str, forecast_date: str
-) -> dict[str, Any]:
-    """Agent-facing wrapper around :func:`get_weather_forecast`.
-
-    Convenience for tools runners that expect one function with a JSON-able
-    signature.  Identical validation and output as the underlying function.
-    """
-    return get_weather_forecast(
-        latitude=latitude,
-        longitude=longitude,
-        timezone=timezone,
-        forecast_date=forecast_date,
-    )
-
-
-# ---- Example usage (run directly: python weather_tool.py) ------------------
+# ---- Example usage (run directly: python weather_forecast_tool.py) ----------
 if __name__ == "__main__":
     settings.setup_logging(level="INFO")
 
@@ -221,7 +203,7 @@ if __name__ == "__main__":
     if places:
         place = places[0]
         print(f"Using {place['display_name']} (lat={place['lat']}, lon={place['lon']})")
-        forecast = weather_tool(
+        forecast = get_weather_forecast(
             latitude=place["lat"],
             longitude=place["lon"],
             timezone="Asia/Kolkata",
@@ -229,7 +211,7 @@ if __name__ == "__main__":
         )
     else:
         print("No location resolved; demonstrating direct coordinate lookup for Pune.")
-        forecast = weather_tool(
+        forecast = get_weather_forecast(
             latitude=18.5204,
             longitude=73.8567,
             timezone="Asia/Kolkata",

@@ -17,10 +17,10 @@ Each tool is a thin ``@tool`` wrapper around the deterministic facades in
 ``Backend/Tools/`` - all rate handling and arithmetic lives there, so this
 module stays a clean MAF wiring point.
 
-The model backend is Azure OpenAI, authenticated with the API key from
-``settings`` (a ``AZURE_OPENAI_API_KEY`` in ``.env``).  The MAF chat client
-builds the OpenAI SDK's ``AzureOpenAI`` client under the hood, so no Azure CLI
-login / credential is required.  The system prompt is imported from
+All Microsoft Agent Framework configuration - the Azure OpenAI chat client,
+model/deployment selection, agent construction and the shared run helper - is
+owned by ``Backend/Agents/agent_factory.py``; this module only supplies the
+agent's NAME, INSTRUCTIONS and tools.  The system prompt is imported from
 ``Backend/Agents/Prompts/agent_2_prompt.py``
 (``RECOMMENDATION_AGENT_INSTRUCTIONS``), keeping prompts out of code.
 """
@@ -31,23 +31,14 @@ login / credential is required.  The system prompt is imported from
 import asyncio  # run the async `agent.run()` in the __main__ demo
 import sys  # ensure the project root is importable when run directly
 from pathlib import Path  # cross-platform path handling
-from typing import (
-    Annotated,  # attach tool-parameter descriptions for the model
-    Any,  # typing for the tool return values
-    cast,  # narrow the client-specific generic returned by the framework
-)
+from typing import Annotated, Any  # tool parameter descriptions + return types
 
 # Microsoft Agent Framework:
-#   Agent      - the container that owns instructions + tools + the LLM client
-#   tool       - decorator turning a plain python function into a FunctionTool
-from agent_framework import Agent, tool
+#   tool - decorator turning a plain python function into a FunctionTool
+from agent_framework import tool
 
-# Azure OpenAI chat client.  For Azure it needs the endpoint + an API key;
-# `model` names the deployment on that endpoint.  MAF wires the OpenAI SDK's
-# `AzureOpenAI` client internally - we never pass a CLI credential.
-from agent_framework.openai import OpenAIChatClient
-
-# Field() descriptions are turned by the framework into the tool JSON schema.
+# pydantic Field() descriptions are turned by the framework into the tool JSON
+# schema.  (Agent/client construction lives in the shared factory below.)
 from pydantic import Field
 
 # Make the project root importable so `Backend.*` imports resolve even when
@@ -58,9 +49,11 @@ if str(object=PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(object=PROJECT_ROOT))
 
 # ============================================================================
-# Logging
+# Imports (project)
 # ============================================================================
-import logging  # structured, level-aware logging shared with the rest of the app
+# Shared factory: Agent type, create_agent (client + tool wiring) and the
+# run_agent helper used by every agent module.
+from Backend.Agents.agent_factory import Agent, create_agent, run_agent
 
 # Agent-2's system prompt lives in the shared prompt store, never inline here.
 from Backend.Agents.Prompts.agent_2_prompt import RECOMMENDATION_AGENT_INSTRUCTIONS
@@ -76,9 +69,6 @@ from Backend.Tools.savings_calculator_tool import (
 from Backend.Tools.tariff_tool import (
     get_tod_tariff as tariff_lookup,  # alias avoids clashing with the @tool name
 )
-
-logger = logging.getLogger(name=__name__)
-
 
 # ============================================================================
 # Tools (registered with the agent via the @tool decorator)
@@ -183,64 +173,48 @@ def create_recommendation_agent(
 ) -> Agent:
     """Build the MAF "energy optimization and recommendation agent".
 
+    Configures the agent with its name, the recommendation system prompt and
+    its three tariff / cost tools; the shared factory
+    (:func:`Backend.Agents.agent_factory.create_agent`) provides the Azure
+    OpenAI client, model selection and wiring.
+
     Args:
-        model: Azure OpenAI deployment name.  Defaults to
-            ``settings.AZURE_OPENAI_CHAT_MODEL`` then
-            ``settings.AZURE_OPENAI_DEPLOYMENT``.
-        azure_endpoint: e.g. ``"https://my-resource.openai.azure.com"``.
-            Defaults to ``settings.AZURE_OPENAI_ENDPOINT``.
-        api_version: Azure OpenAI API version for the Responses API.  Defaults
-            to MAF's own default (sentinel ``"preview"``, resolved by the
-            SDK/env).  Note this deliberately does NOT reuse the
-            Chat-Completions-tuned ``settings.AZURE_OPENAI_CHAT_VERSION``,
-            which this Responses-based client rejects.
-        api_key: Azure OpenAI API key.  Defaults to
-            ``settings.AZURE_OPENAI_API_KEY``.
+        model / azure_endpoint / api_version / api_key: Optional connection
+            overrides; all default to the project settings (see
+            :func:`Backend.Agents.agent_factory.resolve_model_config`).
 
     Returns:
         A constructed ``agent_framework.Agent`` wired to the three tariff / cost
         tools.  Call ``await agent.run(...)`` to execute it.
-
-    Note:
-        Authenticates with the raw API key (via the OpenAI SDK's AzureOpenAI
-        client under the hood) - no Azure CLI / credential objects needed.
     """
-    client = OpenAIChatClient(
-        model=model or settings.AZURE_OPENAI_CHAT_MODEL or settings.AZURE_OPENAI_DEPLOYMENT,
-        azure_endpoint=azure_endpoint or settings.AZURE_OPENAI_ENDPOINT,
+    return create_agent(
+        name="energy optimization and recommendation agent",
+        instructions=RECOMMENDATION_AGENT_INSTRUCTIONS,
+        tools=[
+            get_tod_tariff,
+            estimate_run_cost,
+            reschedule_comparison,
+        ],
+        model=model,
+        azure_endpoint=azure_endpoint,
         api_version=api_version,
-        api_key=api_key or settings.AZURE_OPENAI_API_KEY,
-    )
-
-    # The same Agent() construction pattern as Agent 1: instructions from the
-    # shared prompt store, and only the calculation tools this persona needs.
-    return cast(
-        typ=Agent[Any],
-        val=Agent(
-            client=client,
-            name="energy optimization and recommendation agent",
-            instructions=RECOMMENDATION_AGENT_INSTRUCTIONS,
-            tools=[
-                get_tod_tariff,
-                estimate_run_cost,
-                reschedule_comparison,
-            ],
-        ),
+        api_key=api_key,
     )
 
 
 async def run_recommendation_agent(user_input: str, agent: Agent | None = None) -> str:
     """Run the optimizer agent on ``user_input`` and return the text reply.
 
-    Convenience wrapper for scripts / notebooks that want one call instead of
-    constructing + invoking the agent themselves.
+    Thin wrapper over the factory's shared :func:`run_agent` helper for
+    scripts / notebooks that want one call instead of constructing + invoking
+    the agent themselves.
     """
-    agent = agent or create_recommendation_agent()
-    logger.info("Invoking agent-2 with: %r", user_input)
-    response = await agent.run(user_input)
-    text = str(object=response)
-    logger.info("Agent-2 replied (%d chars).", len(text))
-    return text
+    return await run_agent(
+        user_input,
+        agent=agent,
+        create=create_recommendation_agent,
+        label="Agent-2",
+    )
 
 
 # ============================================================================

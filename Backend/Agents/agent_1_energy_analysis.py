@@ -16,10 +16,10 @@ Each tool is a thin ``@tool`` wrapper around the deterministic facades in
 ``Backend/Tools/`` - all real I/O and model math lives there, so this module
 stays a clean MAF wiring point.
 
-The model backend is Azure OpenAI, authenticated with the API key from
-``settings`` (A ``AZURE_OPENAI_API_KEY`` in ``.env``).  The MAF chat client
-builds the OpenAI SDK's ``AzureOpenAI`` client under the hood, so no Azure CLI
-login / credential is required.  The system prompt is imported from
+All Microsoft Agent Framework configuration - the Azure OpenAI chat client,
+model/deployment selection, agent construction and the shared run helper - is
+owned by ``Backend/Agents/agent_factory.py``; this module only supplies the
+agent's NAME, INSTRUCTIONS and tools.  The system prompt is imported from
 ``Backend/Agents/Prompts/agent_1_prompt.py``
 (``USAGE_COLLECTOR_INSTRUCTIONS``), keeping prompts out of code.
 """
@@ -30,23 +30,14 @@ login / credential is required.  The system prompt is imported from
 import asyncio  # run the async `agent.run()` in the __main__ demo
 import sys  # ensure the project root is importable when run directly
 from pathlib import Path  # cross-platform path handling
-from typing import (
-    Annotated,  # attatch tool-parameter descriptions for the model
-    Any,  # typing for the tool return values
-    cast,  # narrow the client-specific generic returned by the framework
-)
+from typing import Annotated, Any  # tool parameter descriptions + return types
 
 # Microsoft Agent Framework:
-#   Agent      - the container that owns instructions + tools + the LLM client
-#   tool       - decorator turning a plain python function into a FunctionTool
-from agent_framework import Agent, tool
+#   tool - decorator turning a plain python function into a FunctionTool
+from agent_framework import tool
 
-# Azure OpenAI chat client.  For Azure it needs the endpoint + an API key;
-# `model` names the deployment on that endpoint.  MAF wires the OpenAI SDK's
-# `AzureOpenAI` client internally - we never pass a CLI credential.
-from agent_framework.openai import OpenAIChatClient
-
-# Field() descriptions are turned by the framework into the tool JSON schema.
+# pydantic Field() descriptions are turned by the framework into the tool JSON
+# schema.  (Agent/client construction lives in the shared factory below.)
 from pydantic import Field
 
 # Make the project root importable so `Backend.*` imports resolve even when
@@ -56,13 +47,12 @@ PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
 if str(object=PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(object=PROJECT_ROOT))
 
-# Centralised configuration (Azure endpoint / api version / model name).
 # ============================================================================
-# Logging
+# Imports (project)
 # ============================================================================
-# Module-level logger, named after this module so log lines from any agent
-# carry the right origin tag for filtering in the artifact logs.
-import logging
+# Shared factory: Agent type, create_agent (client + tool wiring) and the
+# run_agent helper used by every agent module.
+from Backend.Agents.agent_factory import Agent, create_agent, run_agent
 
 # Agent-1's system prompt lives in the shared prompt store, never inline here.
 from Backend.Agents.Prompts.agent_1_prompt import USAGE_COLLECTOR_INSTRUCTIONS
@@ -72,9 +62,6 @@ from Backend.Config import settings
 from Backend.Tools.historical_usage_tool import get_last_usage
 from Backend.Tools.ml_prediction_tool import predict_daily_kwh
 from Backend.Tools.weather_forecast_tool import get_weather_forecast
-
-logger = logging.getLogger(name=__name__)
-
 
 # ============================================================================
 # Tools (registered with the agent via the @tool decorator)
@@ -164,62 +151,44 @@ def create_usage_collector_agent(
 ) -> Agent:
     """Build the MAF "Energy Usage Collector Agent".
 
+    Configures the agent with its name, the collector system prompt and its
+    three data tools; the shared factory
+    (:func:`Backend.Agents.agent_factory.create_agent`) provides the Azure
+    OpenAI client, model selection and wiring.
+
     Args:
-        model: Azure OpenAI deployment name.  Defaults to
-            ``settings.AZURE_OPENAI_CHAT_MODEL`` then
-            ``settings.AZURE_OPENAI_DEPLOYMENT``.
-        azure_endpoint: e.g. ``"https://my-resource.openai.azure.com"``.
-            Defaults to ``settings.AZURE_OPENAI_ENDPOINT``.
-        api_version: Azure OpenAI API version for the Responses API.  Defaults
-            to MAF's own default (sentinel ``"preview"``, resolved by the
-            SDK/env).  Note this deliberately does NOT reuse the
-            Chat-Completions-tuned ``settings.AZURE_OPENAI_CHAT_VERSION``,
-            which this Responses-based client rejects.
-        api_key: Azure OpenAI API key.  Defaults to
-            ``settings.AZURE_OPENAI_API_KEY``.
+        model / azure_endpoint / api_version / api_key: Optional connection
+            overrides; all default to the project settings (see
+            :func:`Backend.Agents.agent_factory.resolve_model_config`).
 
     Returns:
         A constructed ``agent_framework.Agent`` wired to the three collector
         tools.  Call ``await agent.run(...)`` to execute it.
-
-    Note:
-        Authenticates with the raw API key (via the OpenAI SDK's AzureOpenAI
-        client under the hood) - no Azure CLI / credential objects needed.
     """
-    client = OpenAIChatClient(
-        model=model or settings.AZURE_OPENAI_CHAT_MODEL or settings.AZURE_OPENAI_DEPLOYMENT,
-        azure_endpoint=azure_endpoint or settings.AZURE_OPENAI_ENDPOINT,
+    return create_agent(
+        name="Energy Usage Collector Agent",
+        instructions=USAGE_COLLECTOR_INSTRUCTIONS,
+        tools=[get_last_usage_from_csv, get_tomorrow_weather, forecast_next_day_kwh],
+        model=model,
+        azure_endpoint=azure_endpoint,
         api_version=api_version,
-        api_key=api_key or settings.AZURE_OPENAI_API_KEY,
-    )
-
-    return cast(
-        typ=Agent[Any],
-        val=Agent(
-            client=client,
-            name="Energy Usage Collector Agent",
-            instructions=USAGE_COLLECTOR_INSTRUCTIONS,
-            tools=[
-                get_last_usage_from_csv,
-                get_tomorrow_weather,
-                forecast_next_day_kwh,
-            ],
-        ),
+        api_key=api_key,
     )
 
 
 async def run_usage_collector(user_input: str, agent: Agent | None = None) -> str:
     """Run the collector agent on ``user_input`` and return the text reply.
 
-    Convenience wrapper for scripts / notebooks that want one call instead of
-    constructing + invoking the agent themselves.
+    Thin wrapper over the factory's shared :func:`run_agent` helper for
+    scripts / notebooks that want one call instead of constructing + invoking
+    the agent themselves.
     """
-    agent = agent or create_usage_collector_agent()
-    logger.info("Invoking agent-1 with: %r", user_input)
-    response = await agent.run(user_input)
-    text = str(object=response)
-    logger.info("Agent-1 replied (%d chars).", len(text))
-    return text
+    return await run_agent(
+        user_input,
+        agent=agent,
+        create=create_usage_collector_agent,
+        label="Agent-1",
+    )
 
 
 # ============================================================================
@@ -234,4 +203,4 @@ if __name__ == "__main__":
         "latitude 18.5204, longitude 73.8567 (timezone Asia/Kolkata), "
         "household size 3. Return JSON only."
     )
-    print(asyncio.run(run_usage_collector(prompt, agent=demo_agent)))
+    print(asyncio.run(main=run_usage_collector(user_input=prompt, agent=demo_agent)))
