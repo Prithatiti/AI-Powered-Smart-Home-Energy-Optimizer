@@ -58,7 +58,7 @@ async def send_plan_email(payload: EmailPlanRequest) -> dict:
             to=str(object=payload.email),
             name=payload.name,
         )
-    except Exception as exc:  # noqa: BLE001 - surface any upstream failure
+    except Exception as exc:
         logger.exception("Email plan workflow raised: %s", exc)
         raise HTTPException(
             status_code=502, detail="Email report agent failed."
