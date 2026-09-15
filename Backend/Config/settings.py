@@ -82,6 +82,12 @@ AZURE_OPENAI_API_VERSION = os.getenv("AZURE_OPENAI_API_VERSION", "2024-06-01")
 AZURE_OPENAI_DEPLOYMENT = os.getenv(key="AZURE_OPENAI_DEPLOYMENT")
 AZURE_OPENAI_API_KEY = os.getenv(key="AZURE_OPENAI_API_KEY")
 
+# Foundry-style aliases used by some endpoints (.env uses CHAT_MODEL /
+# CHAT_VERSION for the deployment name and preview API version).  Agents fall
+# back on AZURE_OPENAI_DEPLOYMENT / AZURE_OPENAI_API_VERSION when unset.
+AZURE_OPENAI_CHAT_MODEL = os.getenv(key="AZURE_OPENAI_CHAT_MODEL")
+AZURE_OPENAI_CHAT_VERSION = os.getenv(key="AZURE_OPENAI_CHAT_VERSION")
+
 # ============================================================================
 # Weather API configuration
 # ============================================================================
