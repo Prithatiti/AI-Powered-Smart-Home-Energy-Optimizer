@@ -1,4 +1,4 @@
-#⚡ WattPilot AI: AI-Powered Smart Home Energy Optimizer
+# ⚡ WattPilot AI: AI-Powered Smart Home Energy Optimizer
 
 An **AI-powered smart home energy platform** that predicts per-appliance electricity
 consumption, prices every action against your time-of-use tariff, and generates
