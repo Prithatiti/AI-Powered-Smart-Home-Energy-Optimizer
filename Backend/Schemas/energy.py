@@ -13,7 +13,7 @@ back by the agent validate alike.
 """
 
 import sys
-from datetime import datetime
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -49,7 +49,7 @@ class ApplianceUsage(BaseModel):
         """Reject dates the two supported formats cannot represent."""
         for fmt in _DATE_FORMATS:
             try:
-                datetime.strptime(value, fmt)
+                datetime.strptime(value, fmt).replace(tzinfo=UTC)
                 break
             except ValueError:
                 continue
@@ -64,7 +64,7 @@ class ApplianceUsage(BaseModel):
         if value == "24:00":
             return value
         try:
-            datetime.strptime(value, _TIME_FORMATS[0])
+            datetime.strptime(value, _TIME_FORMATS[0]).replace(tzinfo=UTC)
         except ValueError as exc:
             raise ValueError(f"time must be 24h 'HH:MM', got {value!r}") from exc
         return value
