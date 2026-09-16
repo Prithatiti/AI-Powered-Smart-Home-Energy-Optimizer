@@ -1,4 +1,4 @@
-# ⚡ WattPilot AI — AI-Powered Smart Home Energy Optimizer
+<img width="467" height="390" alt="WattPilot AI Forecast Page" src="https://github.com/user-attachments/assets/7c3ddf29-ff7e-4b03-9f68-54aec88863d2" /># ⚡ WattPilot AI — AI-Powered Smart Home Energy Optimizer
 
 An **AI-powered smart home energy platform** that predicts per-appliance electricity
 consumption, prices every action against your time-of-use tariff, and generates
@@ -10,15 +10,50 @@ weather & geocoding, **FastAPI** for the backend API, and a **React (Vite)** das
 
 ---
 
-## 📸 1. Application Screenshot
+## 📸 Application Screenshots
 
-> **Placeholder** — add the application screenshot here.
->
-> ```markdown
-> ![WattPilot AI Dashboard](docs/screenshots/dashboard.png)
-> ```
+<p align="center">
+  <img 
+    src="https://github.com/user-attachments/assets/d94cf6f1-cd84-4f84-aa87-3edc712082c2" 
+    alt="WattPilot AI Home Page" 
+    width="45%"
+  />
+  &nbsp;&nbsp;
+  <img 
+    src="https://github.com/user-attachments/assets/cb50d33f-07db-48f9-8c35-4f3a4805b077" 
+    alt="WattPilot AI Dashboard" 
+    width="45%"
+  />
+</p>
 
-![Application Screenshot](docs/screenshots/dashboard.png)
+<p align="center">
+  <b>🏠 Home Page</b>
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+  <b>📊 Dashboard</b>
+</p>
+
+<br>
+
+<p align="center">
+  <img 
+    src="https://github.com/user-attachments/assets/40a702ac-771e-4c27-9b66-72a926b19687" 
+    alt="WattPilot AI Forecast Page" 
+    width="45%"
+  />
+  &nbsp;&nbsp;
+  <img 
+    src="https://github.com/user-attachments/assets/d86b75ef-6192-4702-8245-95f94f3343f1" 
+    alt="WattPilot AI Recommendation Page" 
+    width="45%"
+  />
+</p>
+
+<p align="center">
+  <b>🔮 Energy Forecast</b>
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+  <b>💡 AI Recommendations</b>
+</p>
+
 
 ---
 
