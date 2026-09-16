@@ -111,12 +111,12 @@ export default function Home() {
                   <span className="badge">
                     <BrainCircuit size={14} /> Tomorrow's Plan
                   </span>
-                  <span className="muted" style={{ fontSize: 12 }}>
+                  <span className="muted" style={{ fontSize: 11.5 }}>
                     Sep 16 · cooler day
                   </span>
                 </div>
                 <div className="hero-savings">INR 223</div>
-                <div className="muted" style={{ fontSize: 13 }}>
+                <div className="muted" style={{ fontSize: 12.5 }}>
                   estimated savings
                 </div>
               </div>
@@ -155,7 +155,7 @@ export default function Home() {
             <span className="eyebrow">
               <Cpu size={14} /> Why WattPilot
             </span>
-            <h2 style={{ fontSize: "clamp(22px, 3.5vw, 30px)", margin: "8px 0 4px" }}>
+            <h2 style={{ fontSize: "clamp(20px, 3.2vw, 28px)", margin: "8px 0 4px" }}>
               Everything your energy plan needs
             </h2>
             <p className="muted" style={{ maxWidth: 620, margin: "0 auto" }}>
@@ -184,7 +184,7 @@ export default function Home() {
             <span className="eyebrow">
               <Sparkles size={14} /> Three simple steps
             </span>
-            <h2 style={{ fontSize: "clamp(22px, 3.5vw, 30px)", margin: "8px 0 4px" }}>
+            <h2 style={{ fontSize: "clamp(20px, 3.2vw, 28px)", margin: "8px 0 4px" }}>
               How it works
             </h2>
           </div>

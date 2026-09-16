@@ -77,7 +77,7 @@ export default function Dashboard() {
     background: "#141e33",
     border: "1px solid rgba(148,163,184,0.25)",
     borderRadius: 10,
-    fontSize: 12,
+    fontSize: 11.5,
   };
 
   return (
@@ -120,7 +120,7 @@ export default function Dashboard() {
               <div className="stat-card">
                 <Wind className="stat-icon" size={26} />
                 <span className="stat-label">Top Appliance</span>
-                <span className="stat-value" style={{ fontSize: 19 }}>
+                <span className="stat-value" style={{ fontSize: 18 }}>
                   {stats.topAppliance ? stats.topAppliance[0] : "—"}
                 </span>
                 <span className="stat-sub">
@@ -148,8 +148,8 @@ export default function Dashboard() {
                         </linearGradient>
                       </defs>
                       <CartesianGrid strokeDasharray="3 3" stroke="rgba(148,163,184,0.12)" vertical={false} />
-                      <XAxis dataKey="date" tick={{ fill: "#93a4c0", fontSize: 11 }} axisLine={false} tickLine={false} />
-                      <YAxis tick={{ fill: "#93a4c0", fontSize: 11 }} axisLine={false} tickLine={false} unit=" kWh" />
+                      <XAxis dataKey="date" tick={{ fill: "#93a4c0", fontSize: 10.5 }} axisLine={false} tickLine={false} />
+                      <YAxis tick={{ fill: "#93a4c0", fontSize: 10.5 }} axisLine={false} tickLine={false} unit=" kWh" />
                       <Tooltip contentStyle={tooltipStyle} />
                       <Area type="monotone" dataKey="kwh" stroke="#34d399" strokeWidth={2.5} fill="url(#kwh)" />
                     </AreaChart>
@@ -163,8 +163,8 @@ export default function Dashboard() {
                   <ResponsiveContainer width="100%" height="100%">
                     <BarChart data={applianceSeries} margin={{ top: 6, right: 8, left: -14, bottom: 0 }}>
                       <CartesianGrid strokeDasharray="3 3" stroke="rgba(148,163,184,0.12)" vertical={false} />
-                      <XAxis dataKey="name" tick={{ fill: "#93a4c0", fontSize: 10.5 }} axisLine={false} tickLine={false} interval={0} angle={-18} textAnchor="end" height={48} />
-                      <YAxis tick={{ fill: "#93a4c0", fontSize: 11 }} axisLine={false} tickLine={false} unit=" kWh" />
+                      <XAxis dataKey="name" tick={{ fill: "#93a4c0", fontSize: 10 }} axisLine={false} tickLine={false} interval={0} angle={-18} textAnchor="end" height={48} />
+                      <YAxis tick={{ fill: "#93a4c0", fontSize: 10.5 }} axisLine={false} tickLine={false} unit=" kWh" />
                       <Tooltip contentStyle={tooltipStyle} cursor={{ fill: "rgba(148,163,184,0.06)" }} />
                       <Bar dataKey="value" name="kWh" radius={[6, 6, 0, 0]} maxBarSize={46}>
                         {applianceSeries.map((_, i) => (

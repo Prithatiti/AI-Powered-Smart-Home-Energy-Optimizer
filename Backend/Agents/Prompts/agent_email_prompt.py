@@ -92,6 +92,7 @@ WRITING_STYLE = """Compose the email in EXACTLY this structure.  Every part belo
    "The WattPilot AI Team"
 
 Formatting rules:
+  * The Email Subject should be in Title Case, under 60 characters, and never contain HTML.
   * The only HTML is ``<strong>`` on the two words "Biggest win" and on each
     appliance name in the bullets.
   * Everything else is plain text - no other tags, no markdown asterisks.

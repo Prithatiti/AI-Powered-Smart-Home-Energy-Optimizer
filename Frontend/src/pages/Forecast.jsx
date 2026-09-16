@@ -125,7 +125,7 @@ export default function Forecast() {
                   <div className="stat-card">
                     <CalendarDays className="stat-icon" size={26} />
                     <span className="stat-label">Forecast Day</span>
-                    <span className="stat-value" style={{ fontSize: 19 }}>
+                    <span className="stat-value" style={{ fontSize: 18 }}>
                       {forecast[0]?.ds || "Tomorrow"}
                     </span>
                     <span className="stat-sub">{city || "your city"} · Asia/Kolkata</span>
@@ -144,10 +144,10 @@ export default function Forecast() {
                     <ResponsiveContainer width="100%" height="100%">
                       <BarChart data={chartData} margin={{ top: 6, right: 8, left: -8, bottom: 0 }}>
                         <CartesianGrid strokeDasharray="3 3" stroke="rgba(148,163,184,0.12)" vertical={false} />
-                        <XAxis dataKey="name" tick={{ fill: "#93a4c0", fontSize: 11 }} axisLine={false} tickLine={false} interval={0} angle={-14} textAnchor="end" height={44} />
-                        <YAxis tick={{ fill: "#93a4c0", fontSize: 11 }} axisLine={false} tickLine={false} unit=" kWh" />
+                        <XAxis dataKey="name" tick={{ fill: "#93a4c0", fontSize: 10.5 }} axisLine={false} tickLine={false} interval={0} angle={-14} textAnchor="end" height={44} />
+                        <YAxis tick={{ fill: "#93a4c0", fontSize: 10.5 }} axisLine={false} tickLine={false} unit=" kWh" />
                         <Tooltip
-                          contentStyle={{ background: "#141e33", border: "1px solid rgba(148,163,184,0.25)", borderRadius: 10, fontSize: 12 }}
+                          contentStyle={{ background: "#141e33", border: "1px solid rgba(148,163,184,0.25)", borderRadius: 10, fontSize: 11.5 }}
                           cursor={{ fill: "rgba(148,163,184,0.06)" }}
                         />
                         <Bar dataKey="kwh" name="kWh" radius={[6, 6, 0, 0]} maxBarSize={52}>

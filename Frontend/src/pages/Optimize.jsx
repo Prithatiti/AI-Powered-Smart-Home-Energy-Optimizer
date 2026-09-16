@@ -159,7 +159,7 @@ export default function Optimize() {
             </div>
 
             <fieldset style={{ border: "1px solid var(--border-strong)", borderRadius: 14, padding: "14px 16px", margin: 0, marginTop: 18 }}>
-              <legend style={{ fontSize: 12, fontWeight: 700, color: "var(--text-muted)", padding: "0 6px" }}>
+              <legend style={{ fontSize: 11.5, fontWeight: 700, color: "var(--text-muted)", padding: "0 6px" }}>
                 Email report (optional)
               </legend>
               <div className="field">
@@ -221,7 +221,7 @@ export default function Optimize() {
                   <div className="stat-card">
                     <Clock className="stat-icon" size={26} />
                     <span className="stat-label">Peak Window</span>
-                    <span className="stat-value" style={{ fontSize: 19 }}>
+                    <span className="stat-value" style={{ fontSize: 18 }}>
                       {startHour}:00 – {endHour}:00
                     </span>
                     <span className="stat-sub">dodging the expensive band</span>
@@ -232,7 +232,7 @@ export default function Optimize() {
                   <h3 style={{ marginTop: 0, display: "flex", alignItems: "center", gap: 9 }}>
                     <BrainCircuit size={20} /> AI Summary
                   </h3>
-                  <p style={{ fontSize: 14, color: "var(--text-muted)", margin: 0 }}>{result.summary}</p>
+                  <p style={{ fontSize: 13.5, color: "var(--text-muted)", margin: 0 }}>{result.summary}</p>
                 </div>
 
                 {result.actions?.length > 0 && (
@@ -314,14 +314,14 @@ export default function Optimize() {
                 <X size={18} />
               </button>
             </div>
-            <p className="muted" style={{ fontSize: 13, margin: "8px 0 14px" }}>
+            <p className="muted" style={{ fontSize: 12.5, margin: "8px 0 14px" }}>
               Sent to <b>{emailReport.to}</b> (or composed for preview when SMTP is unconfigured).
             </p>
             <div className="email-preview">
               <div className="subject">{emailReport.subject}</div>
               <div dangerouslySetInnerHTML={{ __html: emailReport.body }} />
             </div>
-            <p className="dim" style={{ fontSize: 12, marginBottom: 0 }}>
+            <p className="dim" style={{ fontSize: 11.5, marginBottom: 0 }}>
               <IndianRupee size={12} style={{ verticalAlign: -2 }} /> Delivery is
               best-effort — the composed email is always returned even when SMTP
               is not configured.
