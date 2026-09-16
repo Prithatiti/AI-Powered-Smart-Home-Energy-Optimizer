@@ -1,4 +1,4 @@
-<img width="467" height="390" alt="WattPilot AI Forecast Page" src="https://github.com/user-attachments/assets/7c3ddf29-ff7e-4b03-9f68-54aec88863d2" /># ⚡ WattPilot AI — AI-Powered Smart Home Energy Optimizer
+⚡ WattPilot AI — AI-Powered Smart Home Energy Optimizer
 
 An **AI-powered smart home energy platform** that predicts per-appliance electricity
 consumption, prices every action against your time-of-use tariff, and generates
@@ -12,13 +12,27 @@ weather & geocoding, **FastAPI** for the backend API, and a **React (Vite)** das
 
 ## 📸 Application Screenshots
 
+WattPilot AI provides an intuitive interface for monitoring energy consumption, 
+forecasting usage, and receiving AI-powered recommendations for optimizing 
+household energy usage.
+
+### 🏠 Home Page
+
 <p align="center">
   <img 
     src="https://github.com/user-attachments/assets/d94cf6f1-cd84-4f84-aa87-3edc712082c2" 
     alt="WattPilot AI Home Page" 
     width="45%"
   />
-  &nbsp;&nbsp;
+</p>
+
+The **Home Page** provides an overview of WattPilot AI and allows users to get started with their energy optimization journey.
+
+---
+
+### 📊 Dashboard
+
+<p align="center">
   <img 
     src="https://github.com/user-attachments/assets/cb50d33f-07db-48f9-8c35-4f3a4805b077" 
     alt="WattPilot AI Dashboard" 
@@ -26,13 +40,11 @@ weather & geocoding, **FastAPI** for the backend API, and a **React (Vite)** das
   />
 </p>
 
-<p align="center">
-  <b>🏠 Home Page</b>
-  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-  <b>📊 Dashboard</b>
-</p>
+The **Dashboard** provides a consolidated view of household energy consumption and relevant usage insights.
 
-<br>
+---
+
+### 🔮 Energy Forecast
 
 <p align="center">
   <img 
@@ -40,7 +52,15 @@ weather & geocoding, **FastAPI** for the backend API, and a **React (Vite)** das
     alt="WattPilot AI Forecast Page" 
     width="45%"
   />
-  &nbsp;&nbsp;
+</p>
+
+The **Forecast Page** presents predicted energy consumption, helping users understand upcoming usage patterns and plan accordingly.
+
+---
+
+### 💡 AI-Powered Recommendations
+
+<p align="center">
   <img 
     src="https://github.com/user-attachments/assets/d86b75ef-6192-4702-8245-95f94f3343f1" 
     alt="WattPilot AI Recommendation Page" 
@@ -48,11 +68,7 @@ weather & geocoding, **FastAPI** for the backend API, and a **React (Vite)** das
   />
 </p>
 
-<p align="center">
-  <b>🔮 Energy Forecast</b>
-  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-  <b>💡 AI Recommendations</b>
-</p>
+The **Recommendation Page** provides personalized, AI-powered suggestions to help users reduce energy consumption and optimize appliance usage.
 
 
 ---
