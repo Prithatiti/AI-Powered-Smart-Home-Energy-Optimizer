@@ -1,0 +1,36 @@
+# ============================================================
+# WattPilot AI - Docker Ignore
+# Exclude files that shouldn't be sent to the Docker build context.
+# ============================================================
+
+# --- Git & IDE ---
+.git/
+.gitignore
+.playwright-mcp/
+*.md
+
+# --- Python ---
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+*.egg-info/
+dist/
+build/
+
+# --- Environment & Secrets ---
+.env
+.env.*
+
+# --- Node ---
+Frontend/node_modules/
+Frontend/dist/
+
+# --- Notebook & Artifacts ---
+Backend/Artifacts/
+Backend/Notebook/
+*.ipynb
+
+# --- OS files ---
+.DS_Store
+Thumbs.db

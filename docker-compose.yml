@@ -1,0 +1,65 @@
+# ============================================================
+# WattPilot AI - Docker Compose
+# Orchestrates the backend (FastAPI) and frontend (Nginx)
+# services under a single stack.
+# ============================================================
+
+# Override the default project/stack name (otherwise derived from the
+# directory name, e.g. ai-powered-smart-home-energy-optimizer).
+name: wattpilot
+
+services:
+  # --- Backend: FastAPI + Python ---
+  backend:
+    # Tag the built image, instead of the auto-generated project-based name.
+    image: wattpilot-backend:latest
+    build:
+      context: .
+      dockerfile: Backend/Dockerfile
+    container_name: wattpilot-backend
+    restart: unless-stopped
+    ports:
+      # 8001 is exposed because some other local projects may use port 8000.
+      # The internal container port stays 8000 (Nginx proxy targets backend:8000).
+      - "8001:8000"
+    env_file:
+      - .env
+    environment:
+      # Run in development mode so the app boots even if some optional
+      # secrets (WEATHER_API_KEY, etc.) are unset in .env. In development,
+      # agent features fail gracefully if their Azure OpenAI config is missing.
+      # Switch to production once all secrets are configured.
+      - ENVIRONMENT=development
+    volumes:
+      # Named volume for trained models — persists across rebuilds.
+      # To train models inside the container:
+      #   docker compose exec backend python Backend/Models/model_loader.py
+      - model-artifacts:/app/Backend/Artifacts
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 5s
+      start_period: 10s
+      retries: 3
+
+  # --- Frontend: React (Vite) → Nginx ---
+  frontend:
+    # Tag the built image, instead of the auto-generated project-based name.
+    image: wattpilot-frontend:latest
+    build:
+      context: .
+      dockerfile: Frontend/Dockerfile
+    container_name: wattpilot-frontend
+    restart: unless-stopped
+    ports:
+      - "3000:80"
+    depends_on:
+      backend:
+        condition: service_healthy
+
+networks:
+  default:
+    name: wattpilot-network
+
+volumes:
+  model-artifacts:

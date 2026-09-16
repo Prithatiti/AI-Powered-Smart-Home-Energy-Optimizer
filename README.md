@@ -177,6 +177,7 @@ The notebook version lives at `Backend/Notebook/ml_model_training.ipynb`.
 │   └── WattPilot AI - Logical Architecture Diagram.png
 │
 ├── Backend/
+│   ├── Dockerfile                   # Multi-stage build: Python 3.14 + uv
 │   ├── Agents/
 │   │   ├── agent_factory.py         # Centralized MAF + Azure OpenAI wiring
 │   │   ├── agent_1_energy_analysis.py   # "Usage Collector" agent
@@ -200,18 +201,23 @@ The notebook version lives at `Backend/Notebook/ml_model_training.ipynb`.
 │   ├── Tools/                       # weather · geocode · tariff · ML · savings · usage
 │   └── Artifacts/                   # trained models / predictions / accuracy (generated)
 │
-└── Frontend/                        # React (Vite) single-page app
-    ├── vite.config.js               # Dev server + /api & /health proxy → :8000
-    ├── package.json
-    ├── index.html
-    ├── public/bolt.svg
-    └── src/
-        ├── main.jsx                 # React entry point
-        ├── App.jsx                  # Router (/, /dashboard, /forecast, /optimize)
-        ├── api/client.js            # fetch wrapper for the backend API
-        ├── components/              # Navbar · Footer · Loader · ApplianceSelector
-        ├── pages/                   # Home · Dashboard · Forecast · Optimize
-        └── styles/index.css         # Dark-theme design system
+├── Frontend/                        # React (Vite) single-page app
+│   ├── Dockerfile                   # Multi-stage build: Vite → Nginx
+│   ├── nginx.conf                   # Nginx config for Docker (SPA routing + API proxy)
+│   ├── vite.config.js               # Dev server + /api & /health proxy → :8000
+│   ├── package.json
+│   ├── index.html
+│   ├── public/bolt.svg
+│   └── src/
+│       ├── main.jsx                 # React entry point
+│       ├── App.jsx                  # Router (/, /dashboard, /forecast, /optimize)
+│       ├── api/client.js            # fetch wrapper for the backend API
+│       ├── components/              # Navbar · Footer · Loader · ApplianceSelector
+│       ├── pages/                   # Home · Dashboard · Forecast · Optimize
+│       └── styles/index.css         # Dark-theme design system
+│
+├── docker-compose.yml               # Orchestrates backend + frontend containers
+├── .dockerignore                    # Excludes files from Docker build context
 ```
 
 ---
@@ -634,7 +640,89 @@ npm run preview   # locally preview the production build
 
 ---
 
-## ✨ 13. Features
+## 🐳 13. Docker Deployment
+
+Run the entire application (frontend + backend) as Docker containers with a
+single command.
+
+### Prerequisites
+
+- **Docker** 20.10+ ([install](https://docs.docker.com/get-docker/))
+- **Docker Compose** v2+ ([install](https://docs.docker.com/compose/install/))
+- A `.env` file in the project root (see [section 10](#-10-configure-environment-variables))
+- Trained ML models — either run `python Backend/Models/model_loader.py` locally
+  before starting, or train inside the container afterwards (see note below)
+
+### Quick Start
+
+```bash
+# 1. Build and start both containers in detached mode
+docker compose up --build -d
+
+# 2. Check container status
+docker compose ps
+
+# 3. View logs
+docker compose logs -f        # all services
+docker compose logs -f backend   # backend only
+docker compose logs -f frontend  # frontend only
+```
+
+| Service | URL | Description |
+|---------|-----|-------------|
+| **Frontend** | http://localhost:3000 | React UI (Nginx) |
+| **Backend** | http://localhost:8001 | FastAPI API server |
+| **API Docs** | http://localhost:8001/docs | Swagger interactive docs |
+
+> **Note:** The backend is exposed on port `8001` (not `8000`) because other local
+> containers may already use `8000`. The internal container port stays `8000` —
+> the Nginx proxy targets `backend:8000` on the Docker network either way. Change
+> the host port mapping in `docker-compose.yml` if you prefer a different one.
+
+### Docker Commands
+
+```bash
+# Stop all containers
+docker compose down
+
+# Rebuild without cache (fresh install)
+docker compose up --build --no-cache
+
+# Run only the backend (for development)
+docker compose up backend
+
+# Shell into a running container
+docker compose exec backend bash
+docker compose exec frontend sh
+```
+
+### Architecture Overview
+
+```
+┌─────────────────────┐     ┌─────────────────────┐
+│   Frontend (Nginx)  │     │   Backend (FastAPI)  │
+│   Port: 3000 → 80   │────▶│   Port: 8000         │
+│   React SPA + proxy │     │   Python 3.14        │
+└─────────────────────┘     └─────────────────────┘
+         │                           │
+         │    docker-compose.yml     │
+         └───────────┬───────────────┘
+              wattpilot-network
+```
+
+> **Note:** `Backend/Artifacts/` (trained models) is a **named Docker volume**
+> (`model-artifacts`) that survives container rebuilds. To train the models inside
+> the container:
+> ```bash
+> docker compose exec backend python Backend/Models/model_loader.py
+> ```
+> The backend runs in `development` mode by default so it boots even without
+> every optional secret. Switch `ENVIRONMENT` to `production` in
+> `docker-compose.yml` once all secrets are configured.
+
+---
+
+## ✨ 14. Features
 
 - 🤖 **Multi-agent AI (Microsoft Agent Framework + Azure OpenAI)**
   - Agent 1 *Energy Usage Collector* — pulls history, weather & ML forecasts.
@@ -651,6 +739,6 @@ npm run preview   # locally preview the production build
 
 ---
 
-## 🧾 14. License
+## 🧾 15. License
 
 Distributed under the terms of the project's [LICENSE](LICENSE).
