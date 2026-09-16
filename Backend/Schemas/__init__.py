@@ -21,7 +21,7 @@ Working-notes on the design:
 
 # Re-export every public model so callers can import from the package root:
 #     from Backend.Schemas import HomeProfile, OptimizationRecommendation
-from Backend.Schemas.email import EmailPlanRequest
+from Backend.Schemas.email_schema import EmailPlanRequest
 from Backend.Schemas.energy import ApplianceUsage
 from Backend.Schemas.forecast import ApplianceForecast, ForecastRequest
 from Backend.Schemas.home import (

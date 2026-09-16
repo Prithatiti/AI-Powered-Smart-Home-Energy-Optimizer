@@ -14,9 +14,9 @@ minimum, the following columns:
     date, appliance, start_time, end_time, mode,
     kwh_consumed, avg_temp, weather_condition
 
-Dates may be stored as ``YYYY-MM-DD`` or ``M/D/YYYY``.  All records sharing
-the highest (most recent) date form the "latest" slice returned by
-:func:`get_latest_usage`.
+Dates may be stored as ``YYYY-MM-DD``, ``M/D/YYYY`` or ``M-D-YYYY``.  All
+records sharing the highest (most recent) date form the "latest" slice
+returned by :func:`get_latest_usage`.
 
 Path resolution
 ---------------
@@ -54,7 +54,7 @@ DEFAULT_DATASET_NAME = "real_appliance_usage.csv"
 NUMERIC_COLUMNS = ("kwh_consumed", "avg_temp")
 
 # Accepted date-cell formats, tried in order when parsing a date column.
-_DATE_FORMATS = ("%Y-%m-%d", "%m/%d/%Y")
+_DATE_FORMATS = ("%Y-%m-%d", "%m/%d/%Y", "%m-%d-%Y")
 
 
 # ============================================================================

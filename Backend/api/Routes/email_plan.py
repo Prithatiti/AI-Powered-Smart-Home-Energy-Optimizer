@@ -3,7 +3,7 @@ Email plan-report API endpoint.
 
     POST /api/v1/email/plan  ->  format & send an optimization plan via email
 
-Accepts an :class:`~Backend.Schemas.email.EmailPlanRequest` (an existing
+Accepts an :class:`~Backend.Schemas.email_schema.EmailPlanRequest` (an existing
 optimization plan plus a recipient address) and hands it to the Email Report
 Agent (:func:`Backend.Agents.email_agent.email_report`), which rewrites the
 plan into a human-friendly email and submits it over the configured SMTP

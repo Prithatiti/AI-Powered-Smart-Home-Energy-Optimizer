@@ -5,7 +5,7 @@ Agent-facing wrapper around :mod:`Backend.Services.energy_service`.  Gives
 agents the appliance-level energy loads logged on the most recent date in
 the historical dataset, e.g.::
 
-    [{"date": "11/8/2025", "appliance": "Air Conditioning",
+    [{"date": "11-08-2026", "appliance": "Air Conditioning",
       "start_time": "19:00", "end_time": "23:00", "mode": "Cooling",
       "kwh_consumed": 5.1, "avg_temp": 32.2,
       "weather_condition": "Hot"}, ...]

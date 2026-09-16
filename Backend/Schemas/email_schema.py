@@ -20,7 +20,7 @@ from pydantic import BaseModel, Field, field_validator
 from pydantic.networks import EmailStr
 
 # Make the project root importable so `Backend.*` imports resolve even when
-# this module is launched directly (python Backend/Schemas/email.py).
+# this module is launched directly (python Backend/Schemas/email_schema.py).
 PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
 if str(object=PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(object=PROJECT_ROOT))

@@ -7,8 +7,9 @@ operating window, energy draw in kWh, the ambient temperature it ran under and
 the reported weather condition.
 
 The date / time cell formats deliberately accept both the CSV encoding
-(``"M/D/YYYY"``, ``"19:00"``) and the ISO encoding (``"YYYY-MM-DD"``), so rows
-from the historical dataset and rows echoed back by the agent validate alike.
+(``"M/D/YYYY"``, ``"M-D-YYYY"``, ``"19:00"``) and the ISO encoding
+(``"YYYY-MM-DD"``), so rows from the historical dataset and rows echoed
+back by the agent validate alike.
 """
 
 import sys
@@ -16,7 +17,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field, ValidationError, field_validator
 
 # Make the project root importable so `Backend.*` imports resolve even when
 # this module is launched directly (python Backend/Schemas/energy.py).
@@ -25,7 +26,7 @@ if str(object=PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(object=PROJECT_ROOT))
 
 # Accepted date-cell formats, tried in order (mirrors energy_service.py).
-_DATE_FORMATS = ("%Y-%m-%d", "%m/%d/%Y")
+_DATE_FORMATS = ("%Y-%m-%d", "%m/%d/%Y", "%m-%d-%Y")  # ISO, M/D/YYYY, M-D-YYYY
 # Accepted time-cell formats: "19:00" and the end-of-day sentinel "24:00".
 _TIME_FORMATS = ("%H:%M",)
 
@@ -33,7 +34,7 @@ _TIME_FORMATS = ("%H:%M",)
 class ApplianceUsage(BaseModel):
     """One appliance usage event, validated for types, ranges and cell formats."""
 
-    date: str = Field(description="Usage date, ISO or M/D/YYYY.")
+    date: str = Field(description="Usage date, ISO, M/D/YYYY or M-D-YYYY.")
     appliance: str = Field(min_length=1)
     start_time: str = Field(description="Run start, 24h 'HH:MM'.")
     end_time: str = Field(description="Run end, 24h 'HH:MM' (may be '24:00').")
@@ -53,9 +54,7 @@ class ApplianceUsage(BaseModel):
             except ValueError:
                 continue
         else:
-            raise ValueError(
-                f"date must match one of {_DATE_FORMATS}, got {value!r}"
-            )
+            raise ValueError(f"date must match one of {_DATE_FORMATS}, got {value!r}")
         return value
 
     @field_validator("start_time", "end_time")
@@ -74,7 +73,7 @@ class ApplianceUsage(BaseModel):
 # ---- Example usage (run directly: python energy.py) -------------------------
 if __name__ == "__main__":
     row: dict[str, Any] = {
-        "date": "11/8/2025",
+        "date": "11-08-2026",
         "appliance": "Air Conditioning",
         "start_time": "19:00",
         "end_time": "23:00",
@@ -87,5 +86,5 @@ if __name__ == "__main__":
     print(f"Validated usage: {usage.model_dump()!r}")
     try:
         ApplianceUsage.model_validate({**row, "end_time": "25:00"})
-    except Exception as exc:
+    except ValidationError as exc:
         print(f"Rejected bad clock: {exc}")
