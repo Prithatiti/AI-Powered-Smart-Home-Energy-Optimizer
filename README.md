@@ -139,12 +139,12 @@ The notebook version lives at `Backend/Notebook/ml_model_training.ipynb`.
 │   │   ├── recommendations.py       # POST /api/v1/recommendations
 │   │   └── email_plan.py            # POST /api/v1/email/plan
 │   ├── Config/settings.py           # Env vars, paths, WMO codes, logging, SMTP
-│   ├── Dataset/                     # Appliance-usage CSV datasets
+│   ├── Dataset/                     # Usage CSVs: real_appliance_usage.csv (M-D-YYYY, e.g. 11-08-2026) + smart_home_energy_consumption_large.csv
 │   ├── Models/
 │   │   ├── model_loader.py          # Trains + persists Prophet models
 │   │   └── energy_predictor.py      # Inference against saved models
 │   ├── Notebook/ml_model_training.ipynb  # Interactive training notebook
-│   ├── Schemas/                     # Pydantic models (home, energy, forecast, email...)
+│   ├── Schemas/                     # Pydantic models (home, energy, forecast, email_schema...)
 │   ├── Services/                    # energy_service · geocode_service
 │   ├── Tools/                       # weather · geocode · tariff · ML · savings · usage
 │   └── Artifacts/                   # trained models / predictions / accuracy (generated)
@@ -345,6 +345,186 @@ uvicorn main:app --reload
 | `POST` | `/api/v1/energy/forecast` | Day-ahead per-appliance forecast (Prophet, no LLM) |
 | `POST` | `/api/v1/recommendations` | Two-agent optimization plan (slow, ~2–3 min) |
 | `POST` | `/api/v1/email/plan` | Format & email an optimization plan |
+
+Interactive docs with try-it-out request builders are served at
+http://127.0.0.1:8000/docs.
+
+#### `GET /health` — liveness check
+
+```bash
+curl http://127.0.0.1:8000/health
+```
+
+```json
+{"status": "healthy", "service": "wattpilot-backend"}
+```
+
+#### `GET /api/v1/energy/history` — historical usage
+
+Returns the records from the historical dataset (`Backend/Dataset/real_appliance_usage.csv`).
+Dates are validated through the `ApplianceUsage` schema; malformed rows are
+counted in `skipped`, never fatal. The dataset accepts dates in
+`YYYY-MM-DD`, `M/D/YYYY` or `M-D-YYYY` (e.g. `11-08-2026`).
+
+```bash
+curl "http://127.0.0.1:8000/api/v1/energy/history?limit=2"
+```
+
+```json
+{
+  "total": 25,
+  "skipped": 0,
+  "records": [
+    {
+      "date": "11-04-2026",
+      "appliance": "Air Conditioning",
+      "start_time": "18:00",
+      "end_time": "22:00",
+      "mode": "Cooling",
+      "kwh_consumed": 4.2,
+      "avg_temp": 29.5,
+      "weather_condition": "Clear"
+    },
+    {
+      "date": "11-04-2026",
+      "appliance": "Washing Machine",
+      "start_time": "10:00",
+      "end_time": "11:00",
+      "mode": "Eco",
+      "kwh_consumed": 0.6,
+      "avg_temp": 29.5,
+      "weather_condition": "Clear"
+    }
+  ]
+}
+```
+
+#### `POST /api/v1/energy/forecast` — day-ahead forecast
+
+Body is a `HomeProfile`. When `appliances` is empty, the appliance list is
+derived from the most recent date in the historical dataset. The temperature
+is fetched from Open-Meteo (falls back to 25 °C on error).
+
+```bash
+curl -X POST http://127.0.0.1:8000/api/v1/energy/forecast \
+  -H "Content-Type: application/json" \
+  -d '{
+        "city": null,
+        "latitude": 18.5204,
+        "longitude": 73.8567,
+        "timezone": "Asia/Kolkata",
+        "hh_size": 3,
+        "appliances": []
+      }'
+```
+
+```json
+[
+  {
+    "appliance": "Air Conditioning",
+    "ds": "2026-09-17",
+    "yhat": 85.86,
+    "yhat_lower": 49.93,
+    "yhat_upper": 124.71,
+    "model_path": "Backend/Artifacts/Models/prophet_air_conditioning.pkl",
+    "split_date": "2023-10-20"
+  },
+  {
+    "appliance": "Washing Machine",
+    "ds": "2026-09-17",
+    "yhat": 32.21,
+    "yhat_lower": 20.55,
+    "yhat_upper": 43.96,
+    "model_path": "Backend/Artifacts/Models/prophet_washing_machine.pkl",
+    "split_date": "2023-10-20"
+  }
+]
+```
+
+Requires the trained models (see [Training the ML models](#-training-the-ml-models-once-before-first-forecast)).
+Returns `503` when the models are missing or untrained.
+
+#### `POST /api/v1/recommendations` — two-agent optimization plan
+
+Body is an `OptimizeEnergyRequest` (home config + peak/off-peak tariff). Runs
+the Usage Collector and Energy Optimizer agents — typically takes a few min.
+
+```bash
+curl -X POST http://127.0.0.1:8000/api/v1/recommendations \
+  -H "Content-Type: application/json" \
+  -d '{
+        "hh_size": 4,
+        "appliances_present": ["Air Conditioning", "Microwave", "Computer"],
+        "latitude": 18.6298,
+        "longitude": 73.7997,
+        "timezone": "Asia/Kolkata",
+        "rate_peak": 12.0,
+        "rate_offpeak": 7.5,
+        "tariff_peak_start": "18:00",
+        "tariff_peak_end": "22:00"
+      }'
+```
+
+```json
+{
+  "summary": "Tomorrow looks cooler with slight rain; shift laundry and the dishwasher to after 23:00 to dodge peak pricing.",
+  "actions": [
+    {
+      "appliance": "Washing Machine",
+      "recommendation": "Delay start to 23:00-00:00 off-peak.",
+      "estimated_kwh_saving": 0.0,
+      "estimated_cost_saving": 95.36,
+      "currency": "INR"
+    },
+    {
+      "appliance": "Air Conditioning",
+      "recommendation": "Keep 19:00-23:00 but raise the set-point to 25-26 C.",
+      "estimated_kwh_saving": 9.7,
+      "estimated_cost_saving": 101.93,
+      "currency": "INR"
+    }
+  ],
+  "confidence": 0.9
+}
+```
+
+Requires the Azure OpenAI agent configuration (see section 10). Returns `502`
+when the agent workflow fails to produce a parseable plan.
+
+#### `POST /api/v1/email/plan` — format & email a plan
+
+Body is an `EmailPlanRequest`: a previously generated plan (`plan_json`) plus
+the recipient. The Email Report agent rewrites it into a friendly message and
+sends it over SMTP — best-effort, the composed report is always returned.
+
+```bash
+curl -X POST http://127.0.0.1:8000/api/v1/email/plan \
+  -H "Content-Type: application/json" \
+  -d '{
+        "plan_json": {
+          "summary": "Shift cooling off-peak.",
+          "actions": [
+            {
+              "appliance": "Air Conditioning",
+              "recommendation": "Run 23:00-03:00.",
+              "estimated_kwh_saving": 2.0,
+              "estimated_cost_saving": 57.0,
+              "currency": "INR"
+            }
+          ]
+        },
+        "email": "owner@example.com",
+        "name": "Aarav"
+      }'
+```
+
+```json
+{
+  "to": "owner@example.com",
+  "subject": "Your WattPilot energy report",
+  "body": "<strong>Hi Aarav,</strong><br><br>Here is your plan for tomorrow..."
+}
+```
 
 ---
 
